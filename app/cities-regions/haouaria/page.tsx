@@ -1,0 +1,150 @@
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import { notFound } from "next/navigation"
+import Link from "next/link"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { MapPin, Utensils, Compass } from "lucide-react"
+import { getImageUrl } from "@/lib/drive-utils"
+
+export const dynamic = "force-dynamic"
+
+export default async function ElHaouariaPage() {
+  const supabase = createServerComponentClient({ cookies })
+
+  // Fetch attractions
+  const { data: attractions, error: attractionsError } = await supabase.from("el_haouaria_attractions").select("*")
+
+  // Fetch restaurants
+  const { data: restaurants, error: restaurantsError } = await supabase.from("el_haouaria_restaurants").select("*")
+
+  // Fetch activities
+  const { data: activities, error: activitiesError } = await supabase.from("el_haouaria_activities").select("*")
+
+  if (attractionsError || restaurantsError || activitiesError) {
+    console.error("Error fetching data:", { attractionsError, restaurantsError, activitiesError })
+  }
+
+  if (!attractions?.length && !restaurants?.length && !activities?.length) {
+    return notFound()
+  }
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-4">El Haouaria</h1>
+        <p className="text-lg text-gray-700 mb-6">
+          Une ville tunisienne située à l'extrémité nord-est du Cap Bon, réputée pour ses grottes historiques, ses
+          plages paradisiaques et ses traditions de fauconnerie.
+        </p>
+      </div>
+
+      <Tabs defaultValue="attractions" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="attractions">Attractions</TabsTrigger>
+          <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
+          <TabsTrigger value="activities">Activities</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="attractions">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {attractions?.map((attraction) => (
+              <Card key={attraction.id} className="overflow-hidden">
+                <div className="h-48 bg-gray-200 relative">
+                  <img
+                    src={getImageUrl(attraction.image_url, attraction.title) || "/placeholder.svg"}
+                    alt={attraction.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <CardContent className="p-4">
+                  <h3 className="text-xl font-semibold mb-2">{attraction.title}</h3>
+                  <p className="text-gray-600 mb-4 line-clamp-3">{attraction.description}</p>
+                  <div className="flex justify-between items-center">
+                    <Link href={`/attractions/haouaria/${attraction.id}`}>
+                      <Button variant="outline">View Details</Button>
+                    </Link>
+                    {attraction.google_map_link && (
+                      <a href={attraction.google_map_link} target="_blank" rel="noopener noreferrer">
+                        <Button variant="ghost" size="icon">
+                          <MapPin className="h-5 w-5" />
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="restaurants">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {restaurants?.map((restaurant) => (
+              <Card key={restaurant.id} className="overflow-hidden">
+                <div className="h-48 bg-gray-200 relative">
+                  <img
+                    src={getImageUrl(restaurant.image_url, restaurant.title) || "/placeholder.svg"}
+                    alt={restaurant.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <CardContent className="p-4">
+                  <h3 className="text-xl font-semibold mb-2">{restaurant.title}</h3>
+                  <p className="text-sm text-gray-500 mb-2">{restaurant.cuisine}</p>
+                  <p className="text-gray-600 mb-4 line-clamp-3">{restaurant.description || restaurant.bon_plan}</p>
+                  <div className="flex justify-between items-center">
+                    <Link href={`/restaurants/haouaria/${restaurant.id}`}>
+                      <Button variant="outline">View Details</Button>
+                    </Link>
+                    {restaurant.google_map_link && (
+                      <a href={restaurant.google_map_link} target="_blank" rel="noopener noreferrer">
+                        <Button variant="ghost" size="icon">
+                          <Utensils className="h-5 w-5" />
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="activities">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {activities?.map((activity) => (
+              <Card key={activity.id} className="overflow-hidden">
+                <div className="h-48 bg-gray-200 relative">
+                  <img
+                    src={getImageUrl(activity.image_url, activity.title) || "/placeholder.svg"}
+                    alt={activity.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <CardContent className="p-4">
+                  <h3 className="text-xl font-semibold mb-2">{activity.title}</h3>
+                  <p className="text-sm text-gray-500 mb-2">{activity.type}</p>
+                  <p className="text-gray-600 mb-4 line-clamp-3">{activity.description}</p>
+                  <div className="flex justify-between items-center">
+                    <Link href={`/activities/haouaria/${activity.id}`}>
+                      <Button variant="outline">View Details</Button>
+                    </Link>
+                    {activity.google_map_link && (
+                      <a href={activity.google_map_link} target="_blank" rel="noopener noreferrer">
+                        <Button variant="ghost" size="icon">
+                          <Compass className="h-5 w-5" />
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
